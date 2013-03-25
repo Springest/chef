@@ -166,4 +166,24 @@ describe Chef::DataBag do
     end
   end
 
+  describe "listing data bags" do
+    around do |example|
+      Chef::Config[:solo] = true
+      Chef::Config[:data_bag_path] = '/var/chef/data_bags'
+      example.run
+      Chef::Config[:solo] = false
+    end
+
+    context "in solo mode" do
+      let(:data_bag_dirs) { [ '/var/chef/data_bags/bag_a', '/var/chef/data_bags/bag_b', '/var/chef/data_bags/file_c'] }
+      it "should return the directories in /var/chef/data_bags/*" do
+        Dir.should_receive(:glob).with("/var/chef/data_bags/*").and_return(data_bag_dirs)
+        File.should_receive(:directory?).with('/var/chef/data_bags/bag_a').and_return(true)
+        File.should_receive(:directory?).with('/var/chef/data_bags/bag_b').and_return(true)
+        File.should_receive(:directory?).with('/var/chef/data_bags/file_c').and_return(false)
+
+        Chef::DataBag.list.should == ['bag_a', 'bag_b']
+      end
+    end
+  end
 end
